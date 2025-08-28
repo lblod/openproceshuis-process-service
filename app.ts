@@ -30,5 +30,4 @@ const errorHandler: ErrorRequestHandler = function (err, _req, res, _next) {
   });
 };
 
-
 app.use(errorHandler);
