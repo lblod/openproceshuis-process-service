@@ -1,9 +1,11 @@
 import { query } from 'mu';
 import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
-import { sortToQueryValue } from '../util/query-param';
+import { paginationToQueryValue, sortToQueryValue } from '../util/query-param';
 
 interface ConceptionalProcessTableFilters {
   sort?: string;
+  page?: number;
+  size?: number;
 }
 
 export async function getConceptualProcessExport(
@@ -11,12 +13,13 @@ export async function getConceptualProcessExport(
 ) {
   const content = await getTableContent({
     sort: sortToQueryValue(filterOptions.sort),
+    pagination: paginationToQueryValue(filterOptions.page, filterOptions.size),
   });
 
   return await jsonToCsv(content);
 }
 
-async function getTableContent({ sort }) {
+async function getTableContent({ sort = '', pagination = '' }) {
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX dct: <http://purl.org/dc/terms/>
@@ -47,6 +50,7 @@ async function getTableContent({ sort }) {
       }
     }
     ${sort}
+    ${pagination}
   `);
   const varLabelMap = {
     process: 'Uri',

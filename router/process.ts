@@ -9,6 +9,8 @@ processRouter.get('/download', async (req: Request, res: Response) => {
   try {
     const filterOptions = {
       sort: req.query.sort,
+      page: req.query.page,
+      size: req.query.size,
     };
 
     const csvString = await getConceptualProcessExport(filterOptions);
