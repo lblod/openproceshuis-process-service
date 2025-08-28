@@ -7,7 +7,11 @@ export const processRouter = Router();
 
 processRouter.get('/download', async (req: Request, res: Response) => {
   try {
-    const csvString = await getConceptualProcessExport();
+    const filterOptions = {
+      sort: req.query.sort,
+    };
+
+    const csvString = await getConceptualProcessExport(filterOptions);
     res.set('Content-Type', 'text/csv');
     res.set('Content-Disposition', 'attachment; filename="processes.csv"');
     return res.status(200).send(csvString);

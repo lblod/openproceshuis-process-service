@@ -1,13 +1,22 @@
 import { query } from 'mu';
 import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
+import { sortToQueryValue } from '../util/query-param';
 
-export async function getConceptualProcessExport() {
-  const content = await getTableContent();
+interface ConceptionalProcessTableFilters {
+  sort?: string;
+}
+
+export async function getConceptualProcessExport(
+  filterOptions: ConceptionalProcessTableFilters,
+) {
+  const content = await getTableContent({
+    sort: sortToQueryValue(filterOptions.sort),
+  });
 
   return await jsonToCsv(content);
 }
 
-async function getTableContent() {
+async function getTableContent({ sort }) {
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX dct: <http://purl.org/dc/terms/>
@@ -37,6 +46,7 @@ async function getTableContent() {
       ?process dct:identifier ?identifierNumber .
       }
     }
+    ${sort}
   `);
   const varLabelMap = {
     process: 'Uri',
