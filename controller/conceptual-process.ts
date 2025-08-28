@@ -11,8 +11,15 @@ interface ConceptionalProcessTableFilters {
 export async function getConceptualProcessExport(
   filterOptions: ConceptionalProcessTableFilters,
 ) {
+  const sortVarModelPropertyMap = {
+    number: 'identifierNumber',
+    category: 'categories',
+    group: 'processGroups',
+    domain: 'processDomains',
+    title: 'mainProcesses',
+  };
   const content = await getTableContent({
-    sort: sortToQueryValue(filterOptions.sort),
+    sort: sortToQueryValue(filterOptions.sort, sortVarModelPropertyMap),
     pagination: paginationToQueryValue(filterOptions.page, filterOptions.size),
   });
 

@@ -1,10 +1,14 @@
-export function sortToQueryValue(sort?: string) {
+export function sortToQueryValue(sort?: string, varModelPropertyMap = null) {
   if (!sort) {
     return '';
   }
 
   const ascOrDesc = sort.startsWith('-') ? 'DESC' : 'ASC';
-  const property = sort.replace('-', '');
+  let property = sort.replace('-', '');
+
+  if (varModelPropertyMap && property in varModelPropertyMap) {
+    property = varModelPropertyMap[property];
+  }
 
   return `ORDER BY ${ascOrDesc}(?${property})`;
 }
