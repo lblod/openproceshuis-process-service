@@ -11,6 +11,7 @@ interface ConceptionalProcessTableFilters {
 
 interface HeaderOption {
   sortProperty: string;
+  field: string;
   label: string;
   order?: number;
 }
@@ -36,34 +37,41 @@ export async function getConceptualProcessTableContent(
   const header: Array<HeaderOption> = [
     {
       sortProperty: 'process',
+      field: 'id',
       label: 'uri',
     },
     {
       sortProperty: 'id',
+      field: 'id',
       label: 'id',
     },
     {
       sortProperty: 'categories',
+      field: 'category',
       label: 'Categorie',
       order: 1,
     },
     {
       sortProperty: 'processDomains',
+      field: 'domain',
       label: 'Proces domein',
       order: 2,
     },
     {
       sortProperty: 'processGroups',
+      field: 'group',
       label: 'Proces groep',
       order: 3,
     },
     {
       sortProperty: 'title',
+      field: 'title',
       label: 'Hoofd proces',
       order: 4,
     },
     {
       sortProperty: 'identifierNumber',
+      field: 'number',
       label: 'Number',
       order: 5,
     },
