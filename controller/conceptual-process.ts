@@ -16,7 +16,7 @@ export async function getConceptualProcessExport(
     category: 'categories',
     group: 'processGroups',
     domain: 'processDomains',
-    title: 'mainProcesses',
+    title: 'title',
   };
   const content = await getTableContent({
     sort: sortToQueryValue(filterOptions.sort, sortVarModelPropertyMap),
@@ -33,13 +33,15 @@ async function getTableContent({ sort = '', pagination = '' }) {
     PREFIX adms: <http://www.w3.org/ns/adms#>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 
-    SELECT DISTINCT ?process ?identifierNumber
+    SELECT DISTINCT ?process ?identifierNumber ?title
                     (GROUP_CONCAT(DISTINCT ?category; SEPARATOR=" / ") AS ?categories)
                     (GROUP_CONCAT(DISTINCT ?processDomain; SEPARATOR=" / ") AS ?processDomains)
                     (GROUP_CONCAT(DISTINCT ?processGroup; SEPARATOR=" / ") AS ?processGroups)
-                    (GROUP_CONCAT(DISTINCT ?mainProcess; SEPARATOR=" / ") AS ?mainProcesses)
     WHERE {
       ?process a oph:ConceptueelProces .
+      OPTIONAL {
+        ?process dct:title ?title .
+      }
       OPTIONAL {
         ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch ?category .
       }
@@ -48,9 +50,6 @@ async function getTableContent({ sort = '', pagination = '' }) {
       }
       OPTIONAL {
         ?process oph:procesGroep / skos:prefLabel ?processGroup .
-      }
-      OPTIONAL {
-        ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?mainProcess .
       }
       OPTIONAL {
       ?process dct:identifier ?identifierNumber .
@@ -64,7 +63,7 @@ async function getTableContent({ sort = '', pagination = '' }) {
     categories: 'Categorie',
     processDomains: 'Proces domein',
     processGroups: 'Proces groep',
-    mainProcesses: 'Hoofd proces',
+    title: 'Hoofd proces',
     identifierNumber: 'Number',
   };
 
