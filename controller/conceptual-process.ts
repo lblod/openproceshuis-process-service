@@ -43,7 +43,11 @@ async function getTableContent({ sort = '', pagination = '' }) {
         ?process dct:title ?title .
       }
       OPTIONAL {
-        ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch ?category .
+        ?process adms:status ?status .
+        FILTER(?status != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
+      }
+      OPTIONAL {
+        ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
       }
       OPTIONAL {
         ?process oph:procesGroep / skos:relatedMatch / skos:prefLabel ?processDomain .
@@ -52,7 +56,7 @@ async function getTableContent({ sort = '', pagination = '' }) {
         ?process oph:procesGroep / skos:prefLabel ?processGroup .
       }
       OPTIONAL {
-      ?process dct:identifier ?identifierNumber .
+        ?process dct:identifier ?identifierNumber .
       }
     }
     ${sort}
