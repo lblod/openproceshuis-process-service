@@ -1,6 +1,7 @@
 import { query } from 'mu';
 import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
 import { paginationToQueryValue, sortToQueryValue } from '../util/query-param';
+import { getTotalCountOfConceptionalProcesses } from './count';
 
 interface ConceptionalProcessTableFilters {
   sort?: string;
@@ -24,9 +25,13 @@ export async function getConceptualProcessTableContent(
     domain: 'processDomains',
     title: 'title',
   };
-  const content = await getTableContent({
+  const meta = await getPaginationForContent(filterOptions);
+  const tableContent = await getTableContent({
     sort: sortToQueryValue(filterOptions.sort, sortVarModelPropertyMap),
-    pagination: paginationToQueryValue(filterOptions.page, filterOptions.size),
+    pagination: paginationToQueryValue(
+      filterOptions.page,
+      meta.pagination.self.size,
+    ),
   });
   const header: Array<HeaderOption> = [
     {
@@ -64,29 +69,31 @@ export async function getConceptualProcessTableContent(
     },
   ];
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const content = Object.entries(tableContent).map(([key, process]) => {
+    const visual = {};
+    Object.entries(process).map(([key, value]) => {
+      const label = header.find((h) => h.sortProperty === key)?.label;
+      visual[label] = value;
+    });
+    return visual;
+  });
+
   return {
     headerLabels: header
       .filter((h) => h.order)
       .sort((a, b) => a.order - b.order),
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    content: Object.entries(content).map(([key, process]) => {
-      const visual = {};
-      Object.entries(process).map(([key, value]) => {
-        const label = header.find((h) => h.sortProperty === key)?.label;
-        visual[label] = value;
-      });
-      return visual;
-    }),
+    content: content,
+    meta,
   };
 }
 
 export async function getConceptualProcessExport(
   filterOptions: ConceptionalProcessTableFilters,
 ) {
-  const tableContent =
-    await this.getConceptualProcessTableContent(filterOptions);
+  const tableContent = await getConceptualProcessTableContent(filterOptions);
 
-  return await jsonToCsv(tableContent.data);
+  return await jsonToCsv(tableContent.content);
 }
 
 async function getTableContent({ sort = '', pagination = '' }) {
@@ -129,4 +136,49 @@ async function getTableContent({ sort = '', pagination = '' }) {
   `);
 
   return await queryResultToJson(queryResult);
+}
+
+async function getPaginationForContent(
+  filterOptions: ConceptionalProcessTableFilters,
+) {
+  const count = await getTotalCountOfConceptionalProcesses();
+  const { page, size } = filterOptions;
+  const lastPage = Math.floor(count / size);
+  const meta = {
+    count,
+    pagination: {
+      first: {
+        number: 0,
+      },
+      self: {
+        number: page,
+        size: size,
+      },
+      last: {
+        number: lastPage,
+      },
+      prev: undefined,
+      next: undefined,
+    },
+  };
+  if (page && page > 0) {
+    meta.pagination.prev = {
+      number: page - 1,
+      size: size,
+    };
+  }
+  if (page === lastPage) {
+    meta.pagination.self = {
+      number: page,
+      size: Math.abs(count - page * size),
+    };
+  }
+  if (page * size < count) {
+    meta.pagination.next = {
+      number: page + 1,
+      size: size,
+    };
+  }
+
+  return meta;
 }

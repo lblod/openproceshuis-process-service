@@ -14,7 +14,7 @@ export function sortToQueryValue(sort?: string, varModelPropertyMap = null) {
 }
 
 export function paginationToQueryValue(page?: number, size?: number) {
-  if (!page) {
+  if (page == null || page == undefined) {
     return '';
   }
 

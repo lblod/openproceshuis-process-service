@@ -1,5 +1,6 @@
 {
   "name": "process-service",
+  "type": "module",
   "version": "0.0.0",
   "description": "Service to handle backend business logic for process instances of OPH",
   "main": "app.js",

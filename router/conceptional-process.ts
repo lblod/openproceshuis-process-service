@@ -14,13 +14,14 @@ conceptionalProcessRouter.get(
     try {
       const filterOptions = {
         sort: req.query.sort,
-        page: req.query.page,
-        size: req.query.size,
+        page: req.query.page ? parseInt(req.query.page) : null,
+        size: req.query.size ? parseInt(req.query.size) : 20,
       };
 
       const tableContent =
         await getConceptualProcessTableContent(filterOptions);
 
+      res.set('X-Total-Count', tableContent.meta.count);
       return res.status(200).send(tableContent);
     } catch (error) {
       const message =
@@ -38,8 +39,8 @@ conceptionalProcessRouter.get(
     try {
       const filterOptions = {
         sort: req.query.sort,
-        page: req.query.page,
-        size: req.query.size,
+        page: req.query.page ? parseInt(req.query.page) : null,
+        size: req.query.size ? parseInt(req.query.size) : 20,
       };
 
       const csvString = await getConceptualProcessExport(filterOptions);
