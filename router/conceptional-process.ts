@@ -1,0 +1,57 @@
+import Router from 'express-promise-router';
+
+import { Request, Response } from 'express';
+import {
+  getConceptualProcessExport,
+  getConceptualProcessTableContent,
+} from '../controller/conceptual-process';
+
+export const conceptionalProcessRouter = Router();
+
+conceptionalProcessRouter.get(
+  '/table-content',
+  async (req: Request, res: Response) => {
+    try {
+      const filterOptions = {
+        sort: req.query.sort,
+        page: req.query.page,
+        size: req.query.size,
+      };
+
+      const tableContent =
+        await getConceptualProcessTableContent(filterOptions);
+
+      return res.status(200).send(tableContent);
+    } catch (error) {
+      const message =
+        error.message ??
+        'An error occurred while getting inventory processes table content.';
+      const statusCode = error.status ?? 500;
+      return res.status(statusCode).send({ message });
+    }
+  },
+);
+
+conceptionalProcessRouter.get(
+  '/download',
+  async (req: Request, res: Response) => {
+    try {
+      const filterOptions = {
+        sort: req.query.sort,
+        page: req.query.page,
+        size: req.query.size,
+      };
+
+      const csvString = await getConceptualProcessExport(filterOptions);
+      res.set('Content-Type', 'text/csv');
+      res.set('Content-Disposition', 'attachment; filename="processes.csv"');
+      return res.status(200).send(csvString);
+    } catch (error) {
+      const message =
+        error.message ??
+        'An error occurred while downloading processes as a CSV file.';
+      const statusCode = error.status ?? 500;
+      return res.status(statusCode).send({ message });
+    }
+  },
+);

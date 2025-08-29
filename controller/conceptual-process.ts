@@ -8,7 +8,13 @@ interface ConceptionalProcessTableFilters {
   size?: number;
 }
 
-export async function getConceptualProcessExport(
+interface HeaderOption {
+  sortProperty: string;
+  label: string;
+  order?: number;
+}
+
+export async function getConceptualProcessTableContent(
   filterOptions: ConceptionalProcessTableFilters,
 ) {
   const sortVarModelPropertyMap = {
@@ -22,8 +28,65 @@ export async function getConceptualProcessExport(
     sort: sortToQueryValue(filterOptions.sort, sortVarModelPropertyMap),
     pagination: paginationToQueryValue(filterOptions.page, filterOptions.size),
   });
+  const header: Array<HeaderOption> = [
+    {
+      sortProperty: 'process',
+      label: 'uri',
+    },
+    {
+      sortProperty: 'id',
+      label: 'id',
+    },
+    {
+      sortProperty: 'categories',
+      label: 'Categorie',
+      order: 1,
+    },
+    {
+      sortProperty: 'processDomains',
+      label: 'Proces domein',
+      order: 2,
+    },
+    {
+      sortProperty: 'processGroups',
+      label: 'Proces groep',
+      order: 3,
+    },
+    {
+      sortProperty: 'title',
+      label: 'Hoofd proces',
+      order: 4,
+    },
+    {
+      sortProperty: 'identifierNumber',
+      label: 'Number',
+      order: 5,
+    },
+  ];
 
-  return await jsonToCsv(content);
+  return {
+    headerLabels: header
+      .filter((h) => h.order)
+      .sort((a, b) => a.order - b.order),
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    content: Object.entries(content).map(([key, process]) => {
+      const visual = {};
+      Object.entries(process).map(([key, value]) => {
+        const label = header.find((h) => h.sortProperty === key)?.label;
+        visual[label] = value;
+      });
+      return visual;
+    }),
+  };
+}
+
+export async function getConceptualProcessExport(
+  filterOptions: ConceptionalProcessTableFilters,
+) {
+  const tableContent =
+    await this.getConceptualProcessTableContent(filterOptions);
+
+  return await jsonToCsv(tableContent.data);
 }
 
 async function getTableContent({ sort = '', pagination = '' }) {
@@ -32,13 +95,15 @@ async function getTableContent({ sort = '', pagination = '' }) {
     PREFIX dct: <http://purl.org/dc/terms/>
     PREFIX adms: <http://www.w3.org/ns/adms#>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
 
-    SELECT DISTINCT ?process ?identifierNumber ?title
+    SELECT DISTINCT ?process ?id ?identifierNumber ?title
                     (GROUP_CONCAT(DISTINCT ?category; SEPARATOR=" / ") AS ?categories)
                     (GROUP_CONCAT(DISTINCT ?processDomain; SEPARATOR=" / ") AS ?processDomains)
                     (GROUP_CONCAT(DISTINCT ?processGroup; SEPARATOR=" / ") AS ?processGroups)
     WHERE {
       ?process a oph:ConceptueelProces .
+      ?process mu:uuid ?id .
       OPTIONAL {
         ?process dct:title ?title .
       }
@@ -62,14 +127,6 @@ async function getTableContent({ sort = '', pagination = '' }) {
     ${sort}
     ${pagination}
   `);
-  const varLabelMap = {
-    process: 'Uri',
-    categories: 'Categorie',
-    processDomains: 'Proces domein',
-    processGroups: 'Proces groep',
-    title: 'Hoofd proces',
-    identifierNumber: 'Number',
-  };
 
-  return queryResultToJson(queryResult, varLabelMap);
+  return await queryResultToJson(queryResult);
 }

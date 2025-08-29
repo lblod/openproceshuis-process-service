@@ -19,19 +19,14 @@ export async function jsonToCsv(jsonArray) {
   return csvString;
 }
 
-export function queryResultToJson(queryResult, varLabelMap) {
+export function queryResultToJson(queryResult) {
   const bindings = queryResult.results.bindings;
-  const headers = Object.keys(varLabelMap);
+  const headers = queryResult.head.vars;
 
   return bindings.map((binding) => {
     const unpacked = {};
     for (const headerKey of headers) {
-      let key = headerKey;
-      if (key in varLabelMap) {
-        key = varLabelMap[key];
-      }
-
-      unpacked[key] = binding[headerKey] ? binding[headerKey].value : '';
+      unpacked[headerKey] = binding[headerKey] ? binding[headerKey].value : '';
     }
     return unpacked;
   });
