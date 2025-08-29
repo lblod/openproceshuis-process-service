@@ -10,7 +10,7 @@ export function sortToQueryValue(sort?: string, varModelPropertyMap = null) {
     property = varModelPropertyMap[property];
   }
 
-  return `ORDER BY ${ascOrDesc}(?${property})`;
+  return `ORDER BY ${ascOrDesc}(LCASE(?${property}))`;
 }
 
 export function paginationToQueryValue(page?: number, size?: number) {
