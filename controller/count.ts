@@ -1,6 +1,6 @@
 import { query } from 'mu';
 
-export async function getTotalCountOfConceptionalProcesses() {
+export async function getTotalCountOfConceptualProcesses() {
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX adms: <http://www.w3.org/ns/adms#>

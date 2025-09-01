@@ -1,9 +1,9 @@
 import { query } from 'mu';
 import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
 import { paginationToQueryValue, sortToQueryValue } from '../util/query-param';
-import { getTotalCountOfConceptionalProcesses } from './count';
+import { getTotalCountOfConceptualProcesses } from './count';
 
-interface ConceptionalProcessTableFilters {
+interface ConceptualProcessTableFilters {
   sort?: string;
   page?: number;
   size?: number;
@@ -17,7 +17,7 @@ interface HeaderOption {
 }
 
 export async function getConceptualProcessTableContent(
-  filterOptions: ConceptionalProcessTableFilters,
+  filterOptions: ConceptualProcessTableFilters,
 ) {
   const sortVarModelPropertyMap = [
     { fieldName: 'number', var: 'identifierNumber' },
@@ -97,7 +97,7 @@ export async function getConceptualProcessTableContent(
 }
 
 export async function getConceptualProcessExport(
-  filterOptions: ConceptionalProcessTableFilters,
+  filterOptions: ConceptualProcessTableFilters,
 ) {
   const tableContent = await getConceptualProcessTableContent(filterOptions);
   const contentInOrder = tableContent.content.map((process) => {
@@ -155,9 +155,9 @@ async function getTableContent({ sort = '', pagination = '' }) {
 }
 
 async function getPaginationForContent(
-  filterOptions: ConceptionalProcessTableFilters,
+  filterOptions: ConceptualProcessTableFilters,
 ) {
-  const count = await getTotalCountOfConceptionalProcesses();
+  const count = await getTotalCountOfConceptualProcesses();
   const { page, size } = filterOptions;
   const lastPage = Math.floor(count / size);
   const meta = {
