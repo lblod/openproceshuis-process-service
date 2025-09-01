@@ -17,6 +17,7 @@ export function paginationToQueryValue(page?: number, size?: number) {
   if (page == null || page == undefined) {
     return '';
   }
+  const safeSize = size ? size : 20;
 
-  return `LIMIT ${size ?? 15} OFFSET ${page}`;
+  return `LIMIT ${safeSize} OFFSET ${page * safeSize}`;
 }
