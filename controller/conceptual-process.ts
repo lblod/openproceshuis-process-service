@@ -100,8 +100,16 @@ export async function getConceptualProcessExport(
   filterOptions: ConceptionalProcessTableFilters,
 ) {
   const tableContent = await getConceptualProcessTableContent(filterOptions);
+  const contentInOrder = tableContent.content.map((process) => {
+    return Object.fromEntries(
+      tableContent.headerLabels.map((header) => [
+        header.label,
+        process[header.label],
+      ]),
+    );
+  });
 
-  return await jsonToCsv(tableContent.content);
+  return await jsonToCsv(contentInOrder);
 }
 
 async function getTableContent({ sort = '', pagination = '' }) {
