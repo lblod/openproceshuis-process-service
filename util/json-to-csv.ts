@@ -1,5 +1,6 @@
 import { json2csv } from 'json-2-csv';
 import { HttpError } from './http-error';
+import { Literal } from 'rdflib';
 
 export async function jsonToCsv(jsonArray) {
   if (!jsonArray || jsonArray.length === 0) {
@@ -26,7 +27,13 @@ export function queryResultToJson(queryResult) {
   return bindings.map((binding) => {
     const unpacked = {};
     for (const headerKey of headers) {
-      unpacked[headerKey] = binding[headerKey] ? binding[headerKey].value : '';
+      const term = binding[headerKey];
+      if (!term) {
+        unpacked[headerKey] = null;
+        return;
+      }
+      const literal = new Literal(term.value, term.lang, term.datatype);
+      unpacked[headerKey] = Literal.toJS(literal);
     }
     return unpacked;
   });
