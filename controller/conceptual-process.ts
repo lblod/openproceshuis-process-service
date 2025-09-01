@@ -19,13 +19,13 @@ interface HeaderOption {
 export async function getConceptualProcessTableContent(
   filterOptions: ConceptionalProcessTableFilters,
 ) {
-  const sortVarModelPropertyMap = {
-    number: 'identifierNumber',
-    category: 'categories',
-    group: 'processGroups',
-    domain: 'processDomains',
-    title: 'title',
-  };
+  const sortVarModelPropertyMap = [
+    { fieldName: 'number', var: 'identifierNumber' },
+    { fieldName: 'category', var: 'categories', lowerCase: true },
+    { fieldName: 'group', var: 'processGroups', lowerCase: true },
+    { fieldName: 'domain', var: 'processDomains', lowerCase: true },
+    { fieldName: 'title', var: 'title', lowerCase: true },
+  ];
   const meta = await getPaginationForContent(filterOptions);
   const tableContent = await getTableContent({
     sort: sortToQueryValue(filterOptions.sort, sortVarModelPropertyMap),

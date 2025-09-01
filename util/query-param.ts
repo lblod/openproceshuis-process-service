@@ -1,16 +1,24 @@
-export function sortToQueryValue(sort?: string, varModelPropertyMap = null) {
+export function sortToQueryValue(
+  sort?: string,
+  varModelPropertyMapArray = null,
+) {
   if (!sort) {
     return '';
   }
 
   const ascOrDesc = sort.startsWith('-') ? 'DESC' : 'ASC';
-  let property = sort.replace('-', '');
+  const baseSortString = `ORDER BY ${ascOrDesc}`;
 
-  if (varModelPropertyMap && property in varModelPropertyMap) {
-    property = varModelPropertyMap[property];
+  const property = sort.replace('-', '');
+  const item = varModelPropertyMapArray.find(
+    (item) => item.fieldName === property,
+  );
+  let byLabel = `(?${item.var})`;
+  if (item.lowerCase) {
+    byLabel = `(LCASE(?${item.var}))`;
   }
 
-  return `ORDER BY ${ascOrDesc}(LCASE(?${property}))`;
+  return `${baseSortString} ${byLabel}`;
 }
 
 export function paginationToQueryValue(page?: number, size?: number) {
