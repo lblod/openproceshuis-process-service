@@ -44,7 +44,7 @@ conceptionalProcessRouter.get(
       };
 
       const csvString = await getConceptualProcessExport(filterOptions);
-      res.set('Content-Type', 'text/csv');
+      res.set('Content-Type', 'text/csv; charset=utf-8');
       res.set('Content-Disposition', 'attachment; filename="processes.csv"');
       return res.status(200).send(csvString);
     } catch (error) {
