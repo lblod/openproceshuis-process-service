@@ -54,25 +54,25 @@ export async function getConceptualProcessTableContent(
     {
       sortProperty: 'processDomains',
       field: 'domain',
-      label: 'Proces domein',
+      label: 'Procesdomein',
       order: 2,
     },
     {
       sortProperty: 'processGroups',
       field: 'group',
-      label: 'Proces groep',
+      label: 'Procesgroep',
       order: 3,
     },
     {
       sortProperty: 'title',
       field: 'title',
-      label: 'Hoofd proces',
+      label: 'Hoofdproces',
       order: 4,
     },
     {
       sortProperty: 'identifierNumber',
       field: 'number',
-      label: 'Number',
+      label: 'Nummer',
       order: 5,
     },
   ];
