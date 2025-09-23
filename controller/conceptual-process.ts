@@ -132,7 +132,6 @@ async function getTableContent({ sort = '', pagination = '' }) {
       }
       OPTIONAL {
         ?process adms:status ?status .
-        FILTER(?status != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
       }
       OPTIONAL {
         ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
@@ -146,6 +145,8 @@ async function getTableContent({ sort = '', pagination = '' }) {
       OPTIONAL {
         ?process dct:identifier ?identifierNumber .
       }
+      BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
+      FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
     }
     ${sort}
     ${pagination}
