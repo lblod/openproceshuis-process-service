@@ -23,21 +23,8 @@ interface HeaderOption {
 export async function getConceptualProcessTableContent(
   filterOptions: ConceptualProcessTableFilters,
 ) {
-  const sortVarModelPropertyMap = [
-    { fieldName: 'number', var: 'identifierNumber' },
-    { fieldName: 'category', var: 'categories', lowerCase: true },
-    { fieldName: 'group', var: 'processGroups', lowerCase: true },
-    { fieldName: 'domain', var: 'processDomains', lowerCase: true },
-    { fieldName: 'title', var: 'title', lowerCase: true },
-  ];
   const meta = await getPaginationForContent(filterOptions);
-  const tableContent = await getTableContent({
-    sort: sortToQueryValue(filterOptions.sort, sortVarModelPropertyMap),
-    pagination: paginationToQueryValue(
-      filterOptions.page,
-      meta.pagination.self.size,
-    ),
-  });
+  const tableContent = await getTableContent(filterOptions);
   const header: Array<HeaderOption> = [
     {
       sortProperty: 'process',
@@ -116,7 +103,8 @@ export async function getConceptualProcessExport(
   return await jsonToCsv(contentInOrder);
 }
 
-async function getTableContent({ sort = '', pagination = '' }) {
+async function getTableContent(filters: ConceptualProcessTableFilters) {
+  const sparqlFilters = getSparqlFiltersForFilters(filters);
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX dct: <http://purl.org/dc/terms/>
@@ -152,11 +140,25 @@ async function getTableContent({ sort = '', pagination = '' }) {
       BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
       FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
     }
-    ${sort}
-    ${pagination}
+    ${sparqlFilters.sort}
+    ${sparqlFilters.pagination}
   `);
 
   return await queryResultToJson(queryResult);
+}
+
+function getSparqlFiltersForFilters(filters: ConceptualProcessTableFilters) {
+  const sortVarModelPropertyMap = [
+    { fieldName: 'number', var: 'identifierNumber' },
+    { fieldName: 'category', var: 'categories', lowerCase: true },
+    { fieldName: 'group', var: 'processGroups', lowerCase: true },
+    { fieldName: 'domain', var: 'processDomains', lowerCase: true },
+    { fieldName: 'title', var: 'title', lowerCase: true },
+  ];
+  return {
+    sort: sortToQueryValue(filters.sort, sortVarModelPropertyMap),
+    pagination: paginationToQueryValue(filters.page, filters.size),
+  };
 }
 
 async function getPaginationForContent(
