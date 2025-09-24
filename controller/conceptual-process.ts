@@ -7,6 +7,10 @@ interface ConceptualProcessTableFilters {
   sort?: string;
   page?: number;
   size?: number;
+  categoryId?: string;
+  domainId?: string;
+  groupId?: string;
+  title?: string;
 }
 
 interface HeaderOption {

@@ -12,12 +12,7 @@ conceptionalProcessRouter.get(
   '/table-content',
   async (req: Request, res: Response) => {
     try {
-      const filterOptions = {
-        sort: req.query.sort,
-        page: req.query.page ? parseInt(req.query.page) : null,
-        size: req.query.size ? parseInt(req.query.size) : 20,
-      };
-
+      const filterOptions = getFilterOptionsFromRequest(req);
       const tableContent =
         await getConceptualProcessTableContent(filterOptions);
 
@@ -37,12 +32,7 @@ conceptionalProcessRouter.get(
   '/download',
   async (req: Request, res: Response) => {
     try {
-      const filterOptions = {
-        sort: req.query.sort,
-        page: req.query.page ? parseInt(req.query.page) : null,
-        size: req.query.size ? parseInt(req.query.size) : 20,
-      };
-
+      const filterOptions = getFilterOptionsFromRequest(req);
       const csvString = await getConceptualProcessExport(filterOptions);
       res.set('Content-Type', 'text/csv; charset=utf-8');
       res.set('Content-Disposition', 'attachment; filename="processes.csv"');
@@ -56,3 +46,19 @@ conceptionalProcessRouter.get(
     }
   },
 );
+
+const getFilterOptionsFromRequest = (request: Request) => {
+  const params = request.query;
+  return {
+    sort: params.sort,
+    page: params.page ? parseInt(params.page) : null,
+    size: params.size ? parseInt(params.size) : 20,
+    categoryId: params.category,
+    domainId: params.domain,
+    groupId: params.group,
+    title:
+      params.processTitle && params.processTitle.trim() !== ''
+        ? params.processTitle
+        : null,
+  };
+};
