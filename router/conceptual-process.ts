@@ -51,7 +51,7 @@ const getFilterOptionsFromRequest = (request: Request) => {
   const params = request.query;
   return {
     sort: params.sort,
-    page: params.page ? parseInt(params.page) : null,
+    page: params.page ? parseInt(params.page) : 0,
     size: params.size ? parseInt(params.size) : 20,
     categoryId: params.category,
     domainId: params.domain,

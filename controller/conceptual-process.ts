@@ -1,4 +1,4 @@
-import { query } from 'mu';
+import { query, sparqlEscapeString } from 'mu';
 import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
 import { paginationToQueryValue, sortToQueryValue } from '../util/query-param';
 import { getTotalCountOfConceptualProcesses } from './count';
@@ -10,6 +10,14 @@ interface ConceptualProcessTableFilters {
   categoryId?: string;
   domainId?: string;
   groupId?: string;
+  title?: string;
+}
+interface SparqlFilters {
+  sort?: string;
+  pagination?: string;
+  category?: string;
+  domain?: string;
+  group?: string;
   title?: string;
 }
 
@@ -125,6 +133,7 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
       OPTIONAL {
         ?process adms:status ?status .
       }
+      ${sparqlFilters.category || ''}
       OPTIONAL {
         ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
       }
@@ -147,7 +156,9 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
   return await queryResultToJson(queryResult);
 }
 
-function getSparqlFiltersForFilters(filters: ConceptualProcessTableFilters) {
+function getSparqlFiltersForFilters(
+  filters: ConceptualProcessTableFilters,
+): SparqlFilters {
   const sortVarModelPropertyMap = [
     { fieldName: 'number', var: 'identifierNumber' },
     { fieldName: 'category', var: 'categories', lowerCase: true },
@@ -155,10 +166,18 @@ function getSparqlFiltersForFilters(filters: ConceptualProcessTableFilters) {
     { fieldName: 'domain', var: 'processDomains', lowerCase: true },
     { fieldName: 'title', var: 'title', lowerCase: true },
   ];
-  return {
+  const sparqlFilters = {
     sort: sortToQueryValue(filters.sort, sortVarModelPropertyMap),
     pagination: paginationToQueryValue(filters.page, filters.size),
   };
+
+  if (filters.categoryId) {
+    sparqlFilters['category'] = `
+      ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.categoryId)} .
+    `;
+  }
+
+  return sparqlFilters;
 }
 
 async function getPaginationForContent(
