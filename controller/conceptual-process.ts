@@ -137,6 +137,7 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
       OPTIONAL {
         ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
       }
+      ${sparqlFilters.domain || ''}
       OPTIONAL {
         ?process oph:procesGroep / skos:relatedMatch / skos:prefLabel ?processDomain .
       }
@@ -174,6 +175,11 @@ function getSparqlFiltersForFilters(
   if (filters.categoryId) {
     sparqlFilters['category'] = `
       ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.categoryId)} .
+    `;
+  }
+  if (filters.domainId) {
+    sparqlFilters['domain'] = `
+      ?process oph:procesGroep / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.domainId)} .
     `;
   }
 
