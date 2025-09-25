@@ -3,7 +3,7 @@ import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
 import { paginationToQueryValue, sortToQueryValue } from '../util/query-param';
 import { getTotalCountOfConceptualProcesses } from './count';
 
-interface ConceptualProcessTableFilters {
+export interface ConceptualProcessTableFilters {
   sort?: string;
   page?: number;
   size?: number;
@@ -29,10 +29,10 @@ interface HeaderOption {
 }
 
 export async function getConceptualProcessTableContent(
-  filterOptions: ConceptualProcessTableFilters,
+  filters: ConceptualProcessTableFilters,
 ) {
-  const meta = await getPaginationForContent(filterOptions);
-  const tableContent = await getTableContent(filterOptions);
+  const meta = await getPaginationForContent(filters);
+  const tableContent = await getTableContent(filters);
   const header: Array<HeaderOption> = [
     {
       sortProperty: 'process',
@@ -96,9 +96,9 @@ export async function getConceptualProcessTableContent(
 }
 
 export async function getConceptualProcessExport(
-  filterOptions: ConceptualProcessTableFilters,
+  filters: ConceptualProcessTableFilters,
 ) {
-  const tableContent = await getConceptualProcessTableContent(filterOptions);
+  const tableContent = await getConceptualProcessTableContent(filters);
   const contentInOrder = tableContent.content.map((process) => {
     return Object.fromEntries(
       tableContent.headerLabels.map((header) => [
@@ -158,7 +158,7 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
   return await queryResultToJson(queryResult);
 }
 
-function getSparqlFiltersForFilters(
+export function getSparqlFiltersForFilters(
   filters: ConceptualProcessTableFilters,
 ): SparqlFilters {
   const sortVarModelPropertyMap = [
@@ -192,11 +192,9 @@ function getSparqlFiltersForFilters(
   return sparqlFilters;
 }
 
-async function getPaginationForContent(
-  filterOptions: ConceptualProcessTableFilters,
-) {
-  const count = await getTotalCountOfConceptualProcesses();
-  const { page, size } = filterOptions;
+async function getPaginationForContent(filters: ConceptualProcessTableFilters) {
+  const count = await getTotalCountOfConceptualProcesses(filters);
+  const { page, size } = filters;
   const lastPage = Math.floor(count / size);
   const meta = {
     count,
