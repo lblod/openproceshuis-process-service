@@ -122,6 +122,13 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
         ?process dct:identifier ?identifierNumber .
       }  
     `;
+  const titleFilter =
+    sparqlFilters.title ||
+    `
+      OPTIONAL {
+        ?process dct:title ?title .
+      }
+    `;
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX dct: <http://purl.org/dc/terms/>
@@ -136,9 +143,7 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
     WHERE {
       ?process a oph:ConceptueelProces .
       ?process mu:uuid ?id .
-      OPTIONAL {
-        ?process dct:title ?title .
-      }
+      ${titleFilter}
       OPTIONAL {
         ?process adms:status ?status .
       }
@@ -199,6 +204,12 @@ export function getSparqlFiltersForFilters(
     sparqlFilters['number'] = `
     VALUES ?identifierNumber { ${sparqlEscapeInt(filters.number)} }
       ?process dct:identifier ?identifierNumber .
+    `;
+  }
+  if (filters.title) {
+    sparqlFilters['title'] = `
+      ?process dct:title ?title .
+      FILTER(CONTAINS(LCASE(?title), LCASE(${sparqlEscapeString(filters.title)})))
     `;
   }
 
