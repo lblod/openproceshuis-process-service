@@ -25,7 +25,10 @@ export function paginationToQueryValue(page?: number, size?: number) {
   if (page == null || page == undefined) {
     return '';
   }
-  const safeSize = size ? size : 20;
 
-  return `LIMIT ${safeSize} OFFSET ${page * safeSize}`;
+  if (!size || isNaN(size)) {
+    return '';
+  }
+
+  return `LIMIT ${size} OFFSET ${page * size}`;
 }
