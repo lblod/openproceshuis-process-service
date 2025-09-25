@@ -1,4 +1,4 @@
-import { query, sparqlEscapeString } from 'mu';
+import { query, sparqlEscapeInt, sparqlEscapeString } from 'mu';
 import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
 import { paginationToQueryValue, sortToQueryValue } from '../util/query-param';
 import { getTotalCountOfConceptualProcesses } from './count';
@@ -11,6 +11,7 @@ export interface ConceptualProcessTableFilters {
   domainId?: string;
   groupId?: string;
   title?: string;
+  number?: string;
 }
 interface SparqlFilters {
   sort?: string;
@@ -19,6 +20,7 @@ interface SparqlFilters {
   domain?: string;
   group?: string;
   title?: string;
+  number?: string;
 }
 
 interface HeaderOption {
@@ -113,6 +115,13 @@ export async function getConceptualProcessExport(
 
 async function getTableContent(filters: ConceptualProcessTableFilters) {
   const sparqlFilters = getSparqlFiltersForFilters(filters);
+  const numberFilter =
+    sparqlFilters.number ||
+    `
+      OPTIONAL {
+        ?process dct:identifier ?identifierNumber .
+      }  
+    `;
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX dct: <http://purl.org/dc/terms/>
@@ -145,9 +154,7 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
       OPTIONAL {
         ?process oph:procesGroep / skos:prefLabel ?processGroup .
       }
-      OPTIONAL {
-        ?process dct:identifier ?identifierNumber .
-      }
+      ${numberFilter}
       BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
       FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
     }
@@ -186,6 +193,12 @@ export function getSparqlFiltersForFilters(
   if (filters.groupId) {
     sparqlFilters['group'] = `
       ?process oph:procesGroep / mu:uuid ${sparqlEscapeString(filters.groupId)} .
+    `;
+  }
+  if (filters.number) {
+    sparqlFilters['number'] = `
+    VALUES ?identifierNumber { ${sparqlEscapeInt(filters.number)} }
+      ?process dct:identifier ?identifierNumber .
     `;
   }
 

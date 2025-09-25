@@ -60,5 +60,6 @@ const getFilterOptionsFromRequest = (request: Request) => {
       params.processTitle && params.processTitle.trim() !== ''
         ? params.processTitle
         : null,
+    number: params.processNumber,
   };
 };

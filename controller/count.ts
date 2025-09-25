@@ -13,6 +13,7 @@ export async function getTotalCountOfConceptualProcesses(
     PREFIX adms: <http://www.w3.org/ns/adms#>
     PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX dct: <http://purl.org/dc/terms/>
 
     SELECT (COUNT(DISTINCT ?process) as ?count)
     WHERE {
@@ -26,6 +27,7 @@ export async function getTotalCountOfConceptualProcesses(
       ${sparqlFilters.domain || ''}
       ${sparqlFilters.group || ''}
       ${sparqlFilters.title || ''}
+      ${sparqlFilters.number || ''}
     }
   `);
 
