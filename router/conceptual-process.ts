@@ -2,6 +2,7 @@ import Router from 'express-promise-router';
 
 import { Request, Response } from 'express';
 import {
+  entityHasUsage,
   getConceptualProcessExport,
   getConceptualProcessTableContent,
 } from '../controller/conceptual-process';
@@ -47,6 +48,22 @@ conceptionalProcessRouter.get(
       res.set('Content-Type', 'text/csv; charset=utf-8');
       res.set('Content-Disposition', 'attachment; filename="processes.csv"');
       return res.status(200).send(csvString);
+    } catch (error) {
+      const message =
+        error.message ??
+        'An error occurred while downloading processes as a CSV file.';
+      const statusCode = error.status ?? 500;
+      return res.status(statusCode).send({ message });
+    }
+  },
+);
+
+conceptionalProcessRouter.get(
+  '/:id/hasUsage',
+  async (req: Request, res: Response) => {
+    try {
+      const usage = await entityHasUsage(req.params.id);
+      return res.status(200).send(usage);
     } catch (error) {
       const message =
         error.message ??

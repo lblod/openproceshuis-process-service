@@ -1,7 +1,8 @@
-import { query } from 'mu';
+import { query, sparqlEscapeString, sparqlEscapeUri } from 'mu';
 import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
 import { paginationToQueryValue, sortToQueryValue } from '../util/query-param';
 import { getTotalCountOfConceptualProcesses } from './count';
+import { HttpError } from '../util/http-error';
 
 interface ConceptualProcessTableFilters {
   sort?: string;
@@ -197,4 +198,39 @@ async function getPaginationForContent(
   }
 
   return meta;
+}
+
+export async function entityHasUsage(id: string) {
+  const queryResult = await query(`
+    PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
+    PREFIX dct: <http://purl.org/dc/terms/>
+    PREFIX adms: <http://www.w3.org/ns/adms#>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX mu: <http://mu.semte.ch/vocabularies/core/>
+
+    SELECT DISTINCT ?usage ?type ?usageLabel
+    WHERE {
+      ?entity mu:uuid ${sparqlEscapeString(id)} .
+
+      ?usage a ?type .
+      ?usage mu:uuid ?usageId .
+      ?usage ?p ?entity .
+      ?usage skos:prefLabel ?usageLabel .
+      
+      OPTIONAL {
+        ?usage adms:status ?status .
+      }
+      BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic uri
+      FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
+      FILTER(
+        ?usage != ?entity &&
+        ?p != skos:inScheme
+      )
+    }
+  `);
+  const results = await queryResultToJson(queryResult);
+  return {
+    hasUsage: Boolean(results.length),
+    usage: results,
+  };
 }
