@@ -1,12 +1,26 @@
-import { query } from 'mu';
+import { query, sparqlEscapeInt, sparqlEscapeString } from 'mu';
 import { jsonToCsv, queryResultToJson } from '../util/json-to-csv';
 import { paginationToQueryValue, sortToQueryValue } from '../util/query-param';
 import { getTotalCountOfConceptualProcesses } from './count';
 
-interface ConceptualProcessTableFilters {
+export interface ConceptualProcessTableFilters {
   sort?: string;
   page?: number;
   size?: number;
+  categoryId?: string;
+  domainId?: string;
+  groupId?: string;
+  title?: string;
+  number?: string;
+}
+interface SparqlFilters {
+  sort?: string;
+  pagination?: string;
+  category?: string;
+  domain?: string;
+  group?: string;
+  title?: string;
+  number?: string;
 }
 
 interface HeaderOption {
@@ -17,23 +31,10 @@ interface HeaderOption {
 }
 
 export async function getConceptualProcessTableContent(
-  filterOptions: ConceptualProcessTableFilters,
+  filters: ConceptualProcessTableFilters,
 ) {
-  const sortVarModelPropertyMap = [
-    { fieldName: 'number', var: 'identifierNumber' },
-    { fieldName: 'category', var: 'categories', lowerCase: true },
-    { fieldName: 'group', var: 'processGroups', lowerCase: true },
-    { fieldName: 'domain', var: 'processDomains', lowerCase: true },
-    { fieldName: 'title', var: 'title', lowerCase: true },
-  ];
-  const meta = await getPaginationForContent(filterOptions);
-  const tableContent = await getTableContent({
-    sort: sortToQueryValue(filterOptions.sort, sortVarModelPropertyMap),
-    pagination: paginationToQueryValue(
-      filterOptions.page,
-      meta.pagination.self.size,
-    ),
-  });
+  const meta = await getPaginationForContent(filters);
+  const tableContent = await getTableContent(filters);
   const header: Array<HeaderOption> = [
     {
       sortProperty: 'process',
@@ -97,9 +98,9 @@ export async function getConceptualProcessTableContent(
 }
 
 export async function getConceptualProcessExport(
-  filterOptions: ConceptualProcessTableFilters,
+  filters: ConceptualProcessTableFilters,
 ) {
-  const tableContent = await getConceptualProcessTableContent(filterOptions);
+  const tableContent = await getConceptualProcessTableContent(filters);
   const contentInOrder = tableContent.content.map((process) => {
     return Object.fromEntries(
       tableContent.headerLabels.map((header) => [
@@ -112,7 +113,22 @@ export async function getConceptualProcessExport(
   return await jsonToCsv(contentInOrder);
 }
 
-async function getTableContent({ sort = '', pagination = '' }) {
+async function getTableContent(filters: ConceptualProcessTableFilters) {
+  const sparqlFilters = getSparqlFiltersForFilters(filters);
+  const numberFilter =
+    sparqlFilters.number ||
+    `
+      OPTIONAL {
+        ?process dct:identifier ?identifierNumber .
+      }  
+    `;
+  const titleFilter =
+    sparqlFilters.title ||
+    `
+      OPTIONAL {
+        ?process dct:title ?title .
+      }
+    `;
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX dct: <http://purl.org/dc/terms/>
@@ -127,38 +143,82 @@ async function getTableContent({ sort = '', pagination = '' }) {
     WHERE {
       ?process a oph:ConceptueelProces .
       ?process mu:uuid ?id .
-      OPTIONAL {
-        ?process dct:title ?title .
-      }
+      ${titleFilter}
       OPTIONAL {
         ?process adms:status ?status .
-        FILTER(?status != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
       }
+      ${sparqlFilters.category || ''}
       OPTIONAL {
         ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
       }
+      ${sparqlFilters.domain || ''}
       OPTIONAL {
         ?process oph:procesGroep / skos:relatedMatch / skos:prefLabel ?processDomain .
       }
+      ${sparqlFilters.group || ''}
       OPTIONAL {
         ?process oph:procesGroep / skos:prefLabel ?processGroup .
       }
-      OPTIONAL {
-        ?process dct:identifier ?identifierNumber .
-      }
+      ${numberFilter}
+      BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
+      FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
     }
-    ${sort}
-    ${pagination}
+    ${sparqlFilters.sort}
+    ${sparqlFilters.pagination}
   `);
 
   return await queryResultToJson(queryResult);
 }
 
-async function getPaginationForContent(
-  filterOptions: ConceptualProcessTableFilters,
-) {
-  const count = await getTotalCountOfConceptualProcesses();
-  const { page, size } = filterOptions;
+export function getSparqlFiltersForFilters(
+  filters: ConceptualProcessTableFilters,
+): SparqlFilters {
+  const sortVarModelPropertyMap = [
+    { fieldName: 'number', var: 'identifierNumber' },
+    { fieldName: 'category', var: 'categories', lowerCase: true },
+    { fieldName: 'group', var: 'processGroups', lowerCase: true },
+    { fieldName: 'domain', var: 'processDomains', lowerCase: true },
+    { fieldName: 'title', var: 'title', lowerCase: true },
+  ];
+  const sparqlFilters = {
+    sort: sortToQueryValue(filters.sort, sortVarModelPropertyMap),
+    pagination: paginationToQueryValue(filters.page, filters.size),
+  };
+
+  if (filters.categoryId) {
+    sparqlFilters['category'] = `
+      ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.categoryId)} .
+    `;
+  }
+  if (filters.domainId) {
+    sparqlFilters['domain'] = `
+      ?process oph:procesGroep / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.domainId)} .
+    `;
+  }
+  if (filters.groupId) {
+    sparqlFilters['group'] = `
+      ?process oph:procesGroep / mu:uuid ${sparqlEscapeString(filters.groupId)} .
+    `;
+  }
+  if (filters.number) {
+    sparqlFilters['number'] = `
+    VALUES ?identifierNumber { ${sparqlEscapeInt(filters.number)} }
+      ?process dct:identifier ?identifierNumber .
+    `;
+  }
+  if (filters.title) {
+    sparqlFilters['title'] = `
+      ?process dct:title ?title .
+      FILTER(CONTAINS(LCASE(?title), LCASE(${sparqlEscapeString(filters.title)})))
+    `;
+  }
+
+  return sparqlFilters;
+}
+
+async function getPaginationForContent(filters: ConceptualProcessTableFilters) {
+  const count = await getTotalCountOfConceptualProcesses(filters);
+  const { page, size } = filters;
   const lastPage = Math.floor(count / size);
   const meta = {
     count,
