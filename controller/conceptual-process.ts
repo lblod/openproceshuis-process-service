@@ -67,7 +67,7 @@ export async function getConceptualProcessTableContent(
     {
       sortProperty: 'title',
       field: 'title',
-      label: 'Hoofdproces',
+      label: 'Proces',
       order: 4,
     },
     {
