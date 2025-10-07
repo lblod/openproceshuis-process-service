@@ -3,6 +3,7 @@ import { app } from 'mu';
 import express, { Request, Response, ErrorRequestHandler } from 'express';
 import bodyParser from 'body-parser';
 
+import { processRouter } from './router/process';
 import { conceptionalProcessRouter } from './router/conceptual-process';
 
 app.use(
@@ -16,6 +17,7 @@ app.use(
 
 app.use(express.urlencoded({ extended: true }));
 
+app.use('/processes', processRouter);
 app.use('/conceptual-processes', conceptionalProcessRouter);
 
 app.get('/health-check', async (req: Request, res: Response) => {
