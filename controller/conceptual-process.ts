@@ -115,20 +115,6 @@ export async function getConceptualProcessExport(
 
 async function getTableContent(filters: ConceptualProcessTableFilters) {
   const sparqlFilters = getSparqlFiltersForFilters(filters);
-  const numberFilter =
-    sparqlFilters.number ||
-    `
-      OPTIONAL {
-        ?process dct:identifier ?identifierNumber .
-      }  
-    `;
-  const titleFilter =
-    sparqlFilters.title ||
-    `
-      OPTIONAL {
-        ?process dct:title ?title .
-      }
-    `;
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX dct: <http://purl.org/dc/terms/>
@@ -143,25 +129,22 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
     WHERE {
       ?process a oph:ConceptueelProces .
       ?process mu:uuid ?id .
-      ${titleFilter}
-      OPTIONAL {
+      ${sparqlFilters.title || ''}
+      ?process dct:title ?title .
+      ${sparqlFilters.category || ''}
+      ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
+      ${sparqlFilters.domain || ''}
+      ?process oph:procesGroep / skos:relatedMatch / skos:prefLabel ?processDomain .
+      ${sparqlFilters.group || ''}
+      ?process oph:procesGroep / skos:prefLabel ?processGroup .
+      ${sparqlFilters.number || ''}
+      ?process dct:identifier ?identifierNumber .
+      
+      FILTER NOT EXISTS {
         ?process adms:status ?status .
       }
-      ${sparqlFilters.category || ''}
-      OPTIONAL {
-        ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
-      }
-      ${sparqlFilters.domain || ''}
-      OPTIONAL {
-        ?process oph:procesGroep / skos:relatedMatch / skos:prefLabel ?processDomain .
-      }
-      ${sparqlFilters.group || ''}
-      OPTIONAL {
-        ?process oph:procesGroep / skos:prefLabel ?processGroup .
-      }
-      ${numberFilter}
-      BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
-      FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
+      #BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
+      #FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
     }
     ${sparqlFilters.sort}
     ${sparqlFilters.pagination}
@@ -208,7 +191,6 @@ export function getSparqlFiltersForFilters(
   }
   if (filters.title) {
     sparqlFilters['title'] = `
-      ?process dct:title ?title .
       FILTER(CONTAINS(LCASE(?title), LCASE(${sparqlEscapeString(filters.title)})))
     `;
   }
