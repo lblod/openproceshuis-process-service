@@ -131,20 +131,27 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
       ?process mu:uuid ?id .
       ${sparqlFilters.title || ''}
       ?process dct:title ?title .
+
+      ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch ?categoryUri .
+      ?categoryUri skos:prefLabel ?category .
       ${sparqlFilters.category || ''}
-      ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
+      
+      ?process oph:procesGroep / skos:relatedMatch ?processDomainUri .
+      ?processDomainUri skos:prefLabel ?processDomain .
       ${sparqlFilters.domain || ''}
-      ?process oph:procesGroep / skos:relatedMatch / skos:prefLabel ?processDomain .
+
+      ?process oph:procesGroep ?processGroupUri .
+      ?processGroupUri skos:prefLabel ?processGroup .
       ${sparqlFilters.group || ''}
-      ?process oph:procesGroep / skos:prefLabel ?processGroup .
+
       ${sparqlFilters.number || ''}
       ?process dct:identifier ?identifierNumber .
       
-      FILTER NOT EXISTS {
+      OPTIONAl {
         ?process adms:status ?status .
       }
-      #BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
-      #FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
+      BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
+      FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
     }
     ${sparqlFilters.sort}
     ${sparqlFilters.pagination}
@@ -170,17 +177,17 @@ export function getSparqlFiltersForFilters(
 
   if (filters.categoryId) {
     sparqlFilters['category'] = `
-      ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.categoryId)} .
+      ?categoryUri mu:uuid ${sparqlEscapeString(filters.categoryId)} .
     `;
   }
   if (filters.domainId) {
     sparqlFilters['domain'] = `
-      ?process oph:procesGroep / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.domainId)} .
+      ?processDomainUri mu:uuid ${sparqlEscapeString(filters.domainId)} .
     `;
   }
   if (filters.groupId) {
     sparqlFilters['group'] = `
-      ?process oph:procesGroep / mu:uuid ${sparqlEscapeString(filters.groupId)} .
+      ?processGroupUri mu:uuid ${sparqlEscapeString(filters.groupId)} .
     `;
   }
   if (filters.number) {
