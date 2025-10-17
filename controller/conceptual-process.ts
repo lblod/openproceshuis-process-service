@@ -132,18 +132,18 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
       ${sparqlFilters.title || ''}
       ?process dct:title ?title .
 
-      ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch ?categoryUri .
-      ?categoryUri skos:prefLabel ?category .
-      ${sparqlFilters.category || ''}
-      
-      ?process oph:procesGroep / skos:relatedMatch ?processDomainUri .
-      ?processDomainUri skos:prefLabel ?processDomain .
-      ${sparqlFilters.domain || ''}
-
       ?process oph:procesGroep ?processGroupUri .
       ?processGroupUri skos:prefLabel ?processGroup .
       ${sparqlFilters.group || ''}
 
+      ?processGroupUri skos:relatedMatch ?processDomainUri .
+      ?processDomainUri skos:prefLabel ?processDomain .
+      ${sparqlFilters.domain || ''}
+
+      ?processDomainUri skos:relatedMatch ?categoryUri .
+      ?categoryUri skos:prefLabel ?category .
+      ${sparqlFilters.category || ''}
+      
       ${sparqlFilters.number || ''}
       ?process dct:identifier ?identifierNumber .
       
