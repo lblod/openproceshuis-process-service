@@ -115,20 +115,6 @@ export async function getConceptualProcessExport(
 
 async function getTableContent(filters: ConceptualProcessTableFilters) {
   const sparqlFilters = getSparqlFiltersForFilters(filters);
-  const numberFilter =
-    sparqlFilters.number ||
-    `
-      OPTIONAL {
-        ?process dct:identifier ?identifierNumber .
-      }  
-    `;
-  const titleFilter =
-    sparqlFilters.title ||
-    `
-      OPTIONAL {
-        ?process dct:title ?title .
-      }
-    `;
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX dct: <http://purl.org/dc/terms/>
@@ -143,25 +129,30 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
     WHERE {
       ?process a oph:ConceptueelProces .
       ?process mu:uuid ?id .
-      ${titleFilter}
-      OPTIONAL {
+
+      ${sparqlFilters.group || ''}
+      ${sparqlFilters.domain || ''}
+      ${sparqlFilters.category || ''}
+      ${sparqlFilters.number || ''}
+      ${sparqlFilters.title || ''}
+
+      OPTIONAl {
         ?process adms:status ?status .
       }
-      ${sparqlFilters.category || ''}
-      OPTIONAL {
-        ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / skos:prefLabel ?category .
-      }
-      ${sparqlFilters.domain || ''}
-      OPTIONAL {
-        ?process oph:procesGroep / skos:relatedMatch / skos:prefLabel ?processDomain .
-      }
-      ${sparqlFilters.group || ''}
-      OPTIONAL {
-        ?process oph:procesGroep / skos:prefLabel ?processGroup .
-      }
-      ${numberFilter}
       BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
       FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
+
+      ?process dct:title ?title .
+      ?process dct:identifier ?identifierNumber .
+
+      ?process oph:procesGroep ?processGroupUri .
+      ?processGroupUri skos:prefLabel ?processGroup .
+
+      ?processGroupUri skos:relatedMatch ?processDomainUri .
+      ?processDomainUri skos:prefLabel ?processDomain .
+
+      ?processDomainUri skos:relatedMatch ?categoryUri .
+      ?categoryUri skos:prefLabel ?category .
     }
     ${sparqlFilters.sort}
     ${sparqlFilters.pagination}
@@ -187,17 +178,17 @@ export function getSparqlFiltersForFilters(
 
   if (filters.categoryId) {
     sparqlFilters['category'] = `
-      ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.categoryId)} .
+      ?categoryUri mu:uuid ${sparqlEscapeString(filters.categoryId)} .
     `;
   }
   if (filters.domainId) {
     sparqlFilters['domain'] = `
-      ?process oph:procesGroep / skos:relatedMatch / mu:uuid ${sparqlEscapeString(filters.domainId)} .
+      ?processDomainUri mu:uuid ${sparqlEscapeString(filters.domainId)} .
     `;
   }
   if (filters.groupId) {
     sparqlFilters['group'] = `
-      ?process oph:procesGroep / mu:uuid ${sparqlEscapeString(filters.groupId)} .
+      ?processGroupUri mu:uuid ${sparqlEscapeString(filters.groupId)} .
     `;
   }
   if (filters.number) {
@@ -208,7 +199,6 @@ export function getSparqlFiltersForFilters(
   }
   if (filters.title) {
     sparqlFilters['title'] = `
-      ?process dct:title ?title .
       FILTER(CONTAINS(LCASE(?title), LCASE(${sparqlEscapeString(filters.title)})))
     `;
   }

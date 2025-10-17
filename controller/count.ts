@@ -8,6 +8,32 @@ export async function getTotalCountOfConceptualProcesses(
   filters: ConceptualProcessTableFilters,
 ) {
   const sparqlFilters = getSparqlFiltersForFilters(filters);
+  const filterString = [
+    {
+      use: sparqlFilters.category,
+      filter: `
+        ?process oph:procesGroep / skos:relatedMatch / skos:relatedMatch ?categoryUri .
+        ${sparqlFilters.category}
+        `,
+    },
+    {
+      use: sparqlFilters.domain,
+      filter: `
+        ?process oph:procesGroep / skos:relatedMatch ?processDomainUri .
+        ${sparqlFilters.domain}
+        `,
+    },
+    {
+      use: sparqlFilters.group,
+      filter: `
+        ?process oph:procesGroep ?processGroupUri .
+        ${sparqlFilters.group}
+        `,
+    },
+  ]
+    .filter((f) => f.use)
+    .map((f) => f.filter)
+    .join(' ');
   const queryResult = await query(`
     PREFIX oph: <http://lblod.data.gift/vocabularies/openproceshuis/>
     PREFIX adms: <http://www.w3.org/ns/adms#>
@@ -19,15 +45,13 @@ export async function getTotalCountOfConceptualProcesses(
     WHERE {
       ?process a oph:ConceptueelProces .
       ?process mu:uuid ?id .
-      OPTIONAL {
+      OPTIONAl {
         ?process adms:status ?status .
-        FILTER(?status != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
       }
-      ${sparqlFilters.category || ''}
-      ${sparqlFilters.domain || ''}
-      ${sparqlFilters.group || ''}
-      ${sparqlFilters.title || ''}
-      ${sparqlFilters.number || ''}
+      BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
+      FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
+        
+      ${filterString}
     }
   `);
 
