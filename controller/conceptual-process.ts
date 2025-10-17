@@ -129,29 +129,30 @@ async function getTableContent(filters: ConceptualProcessTableFilters) {
     WHERE {
       ?process a oph:ConceptueelProces .
       ?process mu:uuid ?id .
-      ${sparqlFilters.title || ''}
-      ?process dct:title ?title .
 
-      ?process oph:procesGroep ?processGroupUri .
-      ?processGroupUri skos:prefLabel ?processGroup .
       ${sparqlFilters.group || ''}
-
-      ?processGroupUri skos:relatedMatch ?processDomainUri .
-      ?processDomainUri skos:prefLabel ?processDomain .
       ${sparqlFilters.domain || ''}
-
-      ?processDomainUri skos:relatedMatch ?categoryUri .
-      ?categoryUri skos:prefLabel ?category .
       ${sparqlFilters.category || ''}
-      
       ${sparqlFilters.number || ''}
-      ?process dct:identifier ?identifierNumber .
-      
+      ${sparqlFilters.title || ''}
+
       OPTIONAl {
         ?process adms:status ?status .
       }
       BIND(IF(BOUND(?status), ?status,  <http://lblod.data.gift/concepts/concept-status/canShowInOPH>) as ?safeStatus) # magic url
       FILTER(?safeStatus != <http://lblod.data.gift/concepts/concept-status/gearchiveerd>)
+
+      ?process dct:title ?title .
+      ?process dct:identifier ?identifierNumber .
+
+      ?process oph:procesGroep ?processGroupUri .
+      ?processGroupUri skos:prefLabel ?processGroup .
+
+      ?processGroupUri skos:relatedMatch ?processDomainUri .
+      ?processDomainUri skos:prefLabel ?processDomain .
+
+      ?processDomainUri skos:relatedMatch ?categoryUri .
+      ?categoryUri skos:prefLabel ?category .
     }
     ${sparqlFilters.sort}
     ${sparqlFilters.pagination}
